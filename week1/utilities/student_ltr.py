@@ -108,7 +108,7 @@ Called from ltr_utils.py
 def create_rescore_ltr_query(user_query: str, query_obj, click_prior_query: str, ltr_model_name: str,
                              ltr_store_name: str,
                              rescore_size=500, main_query_weight=1, rescore_query_weight=2):
-    print("IMPLEMENT ME: create_rescore_ltr_query")
+    # print("IMPLEMENT ME: create_rescore_ltr_query")
     # query_obj["rescore"] = { ... }
     query_obj["rescore"] = {
         "window_size": rescore_size,
@@ -149,11 +149,12 @@ def extract_logged_features(hits, query_id):
     feature_results["sku"] = []
     feature_results["name_match"] = []
     rng = np.random.default_rng(12345)
-    for (idx, hit) in enumerate(hits):
-        feature_results["doc_id"].append(int(hit['_id']))  # capture the doc id so we can join later
-        feature_results["query_id"].append(query_id)  # super redundant, but it will make it easier to join later
-        feature_results["sku"].append(int(hit['_id']))
-        feature_results["name_match"].append(rng.random())
+
+    for (idx,hit) in enumerate(hits):
+        features = hit['fields']['_ltrlog'][0]['log_entry']
+        feature_results["doc_id"].append(hit['_id'])
+        feature_results["sku"].append(int(hit['_source']['sku'][0]))
+        feature_results["query_id"].append(int(query_id))
         for feat_idx, feature in enumerate(features):
             feat_name = feature.get('name')
             feat_val = feature.get('value', 0)
@@ -161,6 +162,7 @@ def extract_logged_features(hits, query_id):
             if feat_vals is None:
                 feat_vals = []
                 feature_results[feat_name] = feat_vals
-                feat_vals.append(feat_val)
+            feat_vals.append(feat_val)
+
     frame = pd.DataFrame(feature_results)
     return frame.astype({'doc_id': 'int64', 'query_id': 'int64', 'sku': 'int64'})
