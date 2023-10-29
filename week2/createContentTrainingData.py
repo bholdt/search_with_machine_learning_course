@@ -5,10 +5,21 @@ from tqdm import tqdm
 import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
+import re
+import nltk
+from nltk.stem import PorterStemmer
+import pandas as pd
+
+stemmer = PorterStemmer()
 
 def transform_name(product_name):
-    # IMPLEMENT
-    return product_name
+    product_name = product_name.lower()
+    # simple split to get words
+    words = product_name.split()
+    # get stems using porter stemmer (idea on slack)
+    stems = [stemmer.stem(word) for word in words]
+    name = ' '.join(stems)
+    return name
 
 # Directory for product data
 directory = r'/workspace/datasets/product_data/products/'
@@ -62,8 +73,29 @@ if __name__ == '__main__':
     files = glob.glob(f'{directory}/*.xml')
     print("Writing results to %s" % output_file)
     with multiprocessing.Pool() as p:
-        all_labels = tqdm(p.imap(_label_filename, files), total=len(files))
-        with open(output_file, 'w') as output:
-            for label_list in all_labels:
-                for (cat, name) in label_list:
-                    output.write(f'__label__{cat} {name}\n')
+        all_labels = list(chain.from_iterable(all_labels))
+
+        # Create a list of dictionaries from 'all_labels'
+        labels_list = [{'category': category, 'name': name} for category, name in all_labels]
+
+        # Initialize a dictionary to count the occurrences of each 'category'
+        category_counts = {}
+
+        # Count the occurrences of each 'category'
+        for label in labels_list:
+            category = label['category']
+            if category in category_counts:
+                category_counts[category] += 1
+            else:
+                category_counts[category] = 1
+
+            # Filter out categories with a count greater than 'min_products'
+            filtered_categories = {category for category, count in category_counts.items() if count > min_products}
+
+            # Create a new list of dictionaries with only the labels whose 'category' is in 'filtered_categories'
+            filtered_labels_list = [label for label in labels_list if label['category'] in filtered_categories]
+
+    with open(output_file, 'w') as output:
+        for _, row in filtered_labels_data_frame.iterrows():
+            print(label)
+            output.write(f'__label__{row["category"]} {row["name"]}\n')
