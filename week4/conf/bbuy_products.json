@@ -5,19 +5,13 @@
       "analyzer": {
         "smarter_hyphens": {
           "tokenizer": "smarter_hyphens_tokenizer",
-          "filter": [
-            "smarter_hyphens_filter",
-            "lowercase"
-          ]
+          "filter": ["smarter_hyphens_filter", "lowercase"]
         }
       },
       "tokenizer": {
         "smarter_hyphens_tokenizer": {
           "type": "char_group",
-          "tokenize_on_chars": [
-            "whitespace",
-            "\n"
-          ]
+          "tokenize_on_chars": ["whitespace", "\n"]
         }
       },
       "filter": {
@@ -401,6 +395,15 @@
             "type": "keyword",
             "ignore_above": 256
           }
+        }
+      },
+      "embedding": {
+        "type": "knn_vector",
+        "dimension": 350,
+        "method": {
+          "name": "hnsw",
+          "space_type": "cosinesimil",
+          "engine": "nmslib"
         }
       }
     }
